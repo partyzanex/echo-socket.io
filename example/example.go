@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"github.com/googollee/go-socket.io"
-	"github.com/labstack/echo"
-	"github.com/umirode/golang-echo-socket.io"
+	"github.com/labstack/echo/v4"
+
+	echoSocket "github.com/partyzanex/echo-socket.io"
 )
 
 func main() {
@@ -16,10 +17,11 @@ func main() {
 	e.Logger.Fatal(e.Start(":8080"))
 }
 
-func socketIOWrapper() *golang_echo_socket_io.Wrapper {
-	wrapper, err := golang_echo_socket_io.NewWrapper(nil)
+func socketIOWrapper() *echoSocket.Wrapper {
+	wrapper, err := echoSocket.NewWrapper(nil)
 	if err != nil {
 		fmt.Println(err.Error())
+		return nil
 	}
 
 	wrapper.OnConnect("/", func(context echo.Context, conn socketio.Conn) error {
