@@ -1,7 +1,9 @@
-package echo_socket_io
+package echosocketio
 
 import (
 	"errors"
+	"sync"
+
 	"github.com/googollee/go-engine.io"
 	"github.com/googollee/go-socket.io"
 	"github.com/labstack/echo/v4"
@@ -20,6 +22,8 @@ type ISocketIOWrapper interface {
 type Wrapper struct {
 	Context echo.Context
 	Server  *socketio.Server
+
+	mu sync.Mutex
 }
 
 // Create wrapper and Socket.io server
@@ -48,6 +52,9 @@ func NewWrapperWithServer(server *socketio.Server) (*Wrapper, error) {
 // On Socket.io client connect
 func (s *Wrapper) OnConnect(nsp string, f func(echo.Context, socketio.Conn) error) {
 	s.Server.OnConnect(nsp, func(conn socketio.Conn) error {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+
 		return f(s.Context, conn)
 	})
 }
@@ -55,6 +62,9 @@ func (s *Wrapper) OnConnect(nsp string, f func(echo.Context, socketio.Conn) erro
 // On Socket.io client disconnect
 func (s *Wrapper) OnDisconnect(nsp string, f func(echo.Context, socketio.Conn, string)) {
 	s.Server.OnDisconnect(nsp, func(conn socketio.Conn, msg string) {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+
 		f(s.Context, conn, msg)
 	})
 }
@@ -62,6 +72,9 @@ func (s *Wrapper) OnDisconnect(nsp string, f func(echo.Context, socketio.Conn, s
 // On Socket.io error
 func (s *Wrapper) OnError(nsp string, f func(echo.Context, error)) {
 	s.Server.OnError(nsp, func(e error) {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+
 		f(s.Context, e)
 	})
 }
@@ -69,6 +82,9 @@ func (s *Wrapper) OnError(nsp string, f func(echo.Context, error)) {
 // On Socket.io event from client
 func (s *Wrapper) OnEvent(nsp, event string, f func(echo.Context, socketio.Conn, string)) {
 	s.Server.OnEvent(nsp, event, func(conn socketio.Conn, msg string) {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+
 		f(s.Context, conn, msg)
 	})
 }
